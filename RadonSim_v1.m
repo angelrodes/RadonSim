@@ -382,19 +382,19 @@ onesigma_params=model.parameters(onesigma,:);
 
 % display results
 disp('----------------------')
-disp('Fitting restuls:')
+disp('Fitting restuls and [one sigma range]:')
 disp(['    Reduced chi-squared: ' num2str(min(model.red_chi_square))])
 disp(['    [Rn]min: ' num2str(best_params(1),3) ' [' num2str(min(onesigma_params(:,1)),3) '-' num2str(max(onesigma_params(:,1)),3) '] Bq/m3'])
-disp(['    [Rn]max: ' num2str(best_params(2),3) ' [' num2str(min(onesigma_params(:,2)),3) '-' num2str(max(onesigma_params(:,2))) '] Bq/m3'])
+disp(['    [Rn]max: ' num2str(best_params(2),3) ' [' num2str(min(onesigma_params(:,2)),3) '-' num2str(max(onesigma_params(:,2)),3) '] Bq/m3'])
 disp(['    Ventilation  rate: ' num2str(best_params(3)*60*60,3) ' [' num2str(min(onesigma_params(:,3))*60*60,3) '-' num2str(max(onesigma_params(:,3))*60*60,3) '] Bq/m3/h'])
 disp(['    Accumulation rate: ' num2str(best_params(4)*60*60,3) ' [' num2str(min(onesigma_params(:,4))*60*60,3) '-' num2str(max(onesigma_params(:,4))*60*60,3) '] Bq/m3/h'])
 disp('----------------------')
 disp('Useful information:')
 ventilation_time=(median(onesigma_params(:,2))-median(onesigma_params(:,1)))/median(onesigma_params(:,3));
-  disp(['    Effective ventilation time needed to flush Rn: ' num2str(floor(ventilation_time/60/60)) ' hours and ' num2str(round(ventilation_time/60-60*floor(ventilation_time/60/60))) ' minutes'])
+  disp(['    Effective ventilation time needed to flush Rn: ' num2str(round(ventilation_time/60/60)) ' hours'])
 accumulation_time=(300-median(onesigma_params(:,1)))/median(onesigma_params(:,4));
 if best_params(1)<300
-  disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(accumulation_time/60/60)) ' hours and ' num2str(round(accumulation_time/60-60*floor(accumulation_time/60/60))) ' minutes'])
+  disp(['    Maximum accumulation time with safe Rn levels: ' num2str(round(accumulation_time/60/60)) ' hours'])
 else
     disp(['    Unsafe minimum Rn concentrations.'])
 end
