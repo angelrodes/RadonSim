@@ -16,7 +16,8 @@ disp('    https://dashboard.airthings.com/devices/')
 %% Select files (Radon data and air circulation)
 radon_data_file='2930129618-latest(47).csv';
 % ventilation_file='Office217.csv';
-ventilation_file='AR_flat_LR_all.csv';
+ventilation_file='Office217_one_week.csv';
+% ventilation_file='AR_flat_LR_all.csv';
 
 %% read radon data
 selectedfile=radon_data_file;
