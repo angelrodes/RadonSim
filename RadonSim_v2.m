@@ -15,8 +15,8 @@ disp('    https://dashboard.airthings.com/devices/')
 
 %% Select files (Radon data and air circulation)
 radon_data_file='2930129618-latest(47).csv';
-% ventilation_file='Office217.csv';
-ventilation_file='Office217_one_week.csv';
+ventilation_file='Office217.csv';
+% ventilation_file='Office217_one_week.csv';
 % ventilation_file='AR_flat_LR_all.csv';
 
 %% read radon data
@@ -379,7 +379,7 @@ onesigma_params=model.parameters(onesigma,:);
 
 % display results
 disp('----------------------')
-disp('Fitting restuls and [one sigma range]:')
+disp('Fitting results and [one sigma range]:')
 disp(['    Reduced chi-squared: ' num2str(min(model.red_chi_square))])
 disp(['    N models in 1-sigma: ' num2str(sum(onesigma))])
 disp(['    [Rn]min: ' num2str(best_params(1),3) ' [' num2str(min(onesigma_params(:,1)),3) '-' num2str(max(onesigma_params(:,1)),3) '] Bq/m3'])
