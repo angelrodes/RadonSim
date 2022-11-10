@@ -14,10 +14,18 @@ disp('    https://dashboard.airthings.com/devices/')
 
 
 %% Select files (Radon data and air circulation)
-radon_data_file='2930129618-latest(47).csv';
-ventilation_file='Office217.csv';
+
+% radon_data_file='2930129618-latest(47).csv';
+% ventilation_file='Office217.csv';
 % ventilation_file='Office217_one_week.csv';
 % ventilation_file='AR_flat_LR_all.csv';
+
+[file,path] = uigetfile('*','Radon data file');
+radon_data_file=fullfile(path,file);
+
+[file,path] = uigetfile('*','Air circulation file');
+ventilation_file=fullfile(path,file);
+
 
 %% read radon data
 selectedfile=radon_data_file;
@@ -175,7 +183,7 @@ end
 model.numeric_time_ticks=unique_days;
 %position of the day strings
 model.posix_time_ticks=interp1(model.numeric_time,model.posix_time,model.numeric_time_ticks,'nearest','extrap');
-wdaystrings=[{'Mo'},{'Tu'},{'We'},{'Th'},{'Fr'},{'Sa'},{'Su'}];
+wdaystrings=[{'Su'},{'Mo'},{'Tu'},{'We'},{'Th'},{'Fr'},{'Sa'}];
 prevmonth=0;
 for n=1:numel(model.posix_time_ticks)
     timestring=num2str(model.numeric_time_ticks(n));
@@ -388,14 +396,25 @@ disp(['    Ventilation  rate: ' num2str(best_params(3)*60*60,3) ' [' num2str(min
 disp(['    Accumulation rate: ' num2str(best_params(4)*60*60,3) ' [' num2str(min(onesigma_params(:,4))*60*60,3) '-' num2str(max(onesigma_params(:,4))*60*60,3) '] Bq/m3/h'])
 disp('----------------------')
 disp('Useful information:')
+data=onesigma_params(:,1);
+precision=min(floor(log10(median(data))),floor(log10(range(data))));
+report=round(min(max(model.instant_Rn),median(data))/10^precision)*10^precision;
+disp(['    Background [Rn] level: ~' num2str(report) ' Bq/m3'])
+data=onesigma_params(:,2);
+precision=min(floor(log10(median(data))),floor(log10(range(data))));
+report=round(min(max(model.instant_Rn),median(data))/10^precision)*10^precision;
+disp(['    Maximum    [Rn] level: ~' num2str(report) ' Bq/m3'])
 ventilation_time=(onesigma_params(:,2)-onesigma_params(:,1))./onesigma_params(:,3);
-  disp(['    Effective ventilation time needed to flush Rn: ' num2str(floor(min(ventilation_time)/60/60)) ' to ' num2str(ceil(max(ventilation_time)/60/60)) ' hours'])
+% disp(['    Effective ventilation time needed to flush Rn: ' num2str(floor(min(ventilation_time)/60/60)) ' to ' num2str(ceil(max(ventilation_time)/60/60)) ' hours'])
+disp(['    Effective ventilation time needed to flush Rn: ~' num2str(round(max(1,median(ventilation_time)/60/60))) ' hours'])
 accumulation_time=(300-onesigma_params(:,1))./onesigma_params(:,4);
 if best_params(1)<300
     if best_params(2)<300
         disp(['    Safe maximum Rn concentrations.'])
     else
-        disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(min(accumulation_time)/60/60)) ' to ' num2str(ceil(max(accumulation_time)/60/60)) ' hours'])
+        % disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(min(accumulation_time)/60/60)) ' to ' num2str(ceil(max(accumulation_time)/60/60)) ' hours'])
+        disp(['    Maximum accumulation time with safe Rn levels: ~' num2str(round(max(1,median(accumulation_time)/60/60))) ' hours'])
+        
     end
 else
     disp(['    Unsafe minimum Rn concentrations.'])
