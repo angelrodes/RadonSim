@@ -15,7 +15,8 @@ disp('    https://dashboard.airthings.com/devices/')
 
 %% Select files (Radon data and air circulation)
 radon_data_file='2930129618-latest(47).csv';
-ventilation_file='Office217.csv';
+% ventilation_file='Office217.csv';
+ventilation_file='AR_flat_LR_all.csv';
 
 %% read radon data
 selectedfile=radon_data_file;
@@ -319,6 +320,7 @@ for n=1:n_models
         model.parameters(n,:)=parameter_limits(1,:) .* ...
             ( parameter_limits(2,:)./parameter_limits(1,:) ).^rand(1,4);
     end
+    model.parameters(n,1)=min(model.parameters(n,1), model.parameters(n,2)); % force min<=max
     params=model.parameters(n,:); % min_Rn max_Rn venitlation_rate accumulation_rate
     %     toc
     
@@ -389,7 +391,11 @@ ventilation_time=(onesigma_params(:,2)-onesigma_params(:,1))./onesigma_params(:,
   disp(['    Effective ventilation time needed to flush Rn: ' num2str(floor(min(ventilation_time)/60/60)) ' to ' num2str(ceil(max(ventilation_time)/60/60)) ' hours'])
 accumulation_time=(300-onesigma_params(:,1))./onesigma_params(:,4);
 if best_params(1)<300
-  disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(min(accumulation_time)/60/60)) ' to ' num2str(ceil(max(accumulation_time)/60/60)) ' hours'])
+    if best_params(2)<300
+        disp(['    Safe maximum Rn concentrations.'])
+    else
+        disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(min(accumulation_time)/60/60)) ' to ' num2str(ceil(max(accumulation_time)/60/60)) ' hours'])
+    end
 else
     disp(['    Unsafe minimum Rn concentrations.'])
 end
@@ -399,18 +405,23 @@ figure('units','normalized','outerposition',[0 0 1 1],'Name','Radon data')
 set(gcf,'color','w');
 hold on
 
-max_y_plot=max(input.Rn);
-% max_y_plot=max(model.instant_Rn);
+seltime=~isnan(model.average_24h(1,:)'-input.Rn);
+max_y_plot=max(400,max(max(input.Rn(seltime)),max(bestmodel_concentrations)));
 
+% plot days
+for n=1:numel(model.posix_time_ticks)
+    text(model.posix_time_ticks(n),model.day_in_week(n)*290/7,model.time_strings{n},...
+        'Color',[0.7 0.7 0.7])
+end
 
 % plot instant data
-% plot(model.posix_time,model.instant_Rn,'-','Color',[0.7 0.7 0.7])
+% plot(model.posix_time,model.instant_Rn,'.','Color',[0.7 0.7 0.7])
 
 
 % plot input data
 sel=~isnan(input.Rn);
 plot(input.posix_time(sel),input.Rn(sel),'-k','LineWidth',3)
-sel=find(input.Rn==max(input.Rn),1,'first');
+sel=find(input.Rn==max(input.Rn(seltime))&seltime,1,'first');
 text(input.posix_time(sel),input.Rn(sel),'Data (24 h)',...
     'VerticalAlignment','Bottom','Color','k')
 
@@ -442,10 +453,7 @@ plot(model.posix_time(sel),model.ventilated(sel)*max_y_plot*1.1,'.b')
 text(min(model.posix_time(sel)),max_y_plot*1.1,' Air circulation',...
     'VerticalAlignment','Bottom','Color','b')
 
-% plot days
-for n=1:numel(model.posix_time_ticks)
-    text(model.posix_time_ticks(n),model.day_in_week(n)*50,model.time_strings{n})
-end
+
 
 xticks(model.posix_time_ticks)
 xticklabels([])
