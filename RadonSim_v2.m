@@ -32,7 +32,7 @@ selectedfile=radon_data_file;
 
 fid = fopen(selectedfile);
 
-disp(['File: ' selectedfile])
+disp(['Radon data file: ' selectedfile])
 
 % recorded;RADON_SHORT_TERM_AVG Bq/m3;TEMP °C;HUMIDITY %;PRESSURE hPa;CO2 ppm;VOC ppb
 % mydata = textscan(fid, '%s %f %f %f %f %f %f ',...
@@ -84,12 +84,12 @@ end
 disp(['    First data: ' num2str(input.numeric_time(1))])
 disp(['    Last update: ' num2str(input.numeric_time(end))])
 
-%% read ventilation data
+%% read air circulation data
 selectedfile=ventilation_file;
 
 fid = fopen(selectedfile);
 
-disp(['File: ' selectedfile])
+disp(['Air circulation file: ' selectedfile])
 
 % recorded;RADON_SHORT_TERM_AVG Bq/m3;TEMP °C;HUMIDITY %;PRESSURE hPa;CO2 ppm;VOC ppb
 % mydata = textscan(fid, '%s %f %f %f %f %f %f ',...
@@ -257,6 +257,17 @@ for n=1:numel(model.instant_Rn)
     end
 end
 
+% create 3 hour average
+model.average_3h=model.instant_Rn.*NaN;
+for n=1:numel(model.instant_Rn)
+    select=find(~isnan(model.instant_Rn) & abs(model.posix_time-model.posix_time(n))<3*60*60);
+    if ~isempty(select)
+        model.average_3h(n)=mean(model.instant_Rn(select));
+    else
+        model.average_3h(n)=NaN;
+    end
+end
+
 % re do 24 h average
 model.instant_averaged_24h=model.instant_Rn*NaN;
 for n=24*60*60/median(diff(model.posix_time)):numel(model.posix_time)
@@ -265,15 +276,13 @@ for n=24*60*60/median(diff(model.posix_time)):numel(model.posix_time)
     model.instant_averaged_24h(n)=mean(data);
 end
 
-%% Run models
-
-% define number of models to run
+%% define number of models to run
 n_random_models=150;
 n_convergence=150;
 n_2s_models=300;
 n_models=n_random_models+n_convergence+n_2s_models;
 
-% define parameters
+%% define parameters
 minimum_rates=range(model.instant_Rn)/range(model.posix_time)/10;
 maximum_rates=range(model.instant_Rn)/min(diff(model.posix_time));
 minimum_Rn=10;
@@ -293,8 +302,8 @@ model.concentrations=NaN.*zeros(n_models,numel(model.posix_time));
 model.red_chi_square=NaN.*zeros(n_models,1);
 model.average_24h=NaN.*zeros(n_models,numel(input.Rn));
 
-% run models
-h = waitbar(0,'Running models...');
+%% run models
+h = waitbar(0,'Running models...','Name','Running models');
 for n=1:n_models
     if n>1
         waitbar(n/n_models,h,['n=' num2str(n) ' ; \chi^2_\nu=' num2str(min(model.red_chi_square),3)])
@@ -384,8 +393,7 @@ bestmodel_24h_average=model.average_24h(select,:);
 onesigma= (model.red_chi_square<min(model.red_chi_square)+1 );
 onesigma_params=model.parameters(onesigma,:);
 
-
-% display results
+%% display results
 disp('----------------------')
 disp('Fitting results and [one sigma range]:')
 disp(['    Reduced chi-squared: ' num2str(min(model.red_chi_square))])
@@ -419,6 +427,7 @@ if best_params(1)<300
 else
     disp(['    Unsafe minimum Rn concentrations.'])
 end
+
 %% Plot results
 
 figure('units','normalized','outerposition',[0 0 1 1],'Name','Radon data')
@@ -431,12 +440,18 @@ max_y_plot=max(400,max(max(input.Rn(seltime)),max(bestmodel_concentrations)));
 % plot days
 for n=1:numel(model.posix_time_ticks)
     text(model.posix_time_ticks(n),model.day_in_week(n)*290/7,model.time_strings{n},...
-        'Color',[0.7 0.7 0.7])
+        'Color',[0.6 0.6 0.6])
 end
 
 % plot instant data
-% plot(model.posix_time,model.instant_Rn,'.','Color',[0.7 0.7 0.7])
+% plot(model.posix_time,model.instant_Rn,'-','Color',[0.9 0.9 0.9])
 
+% plot 3h average
+plot(model.posix_time,model.average_3h,'-','Color',[0.9 0.9 0.9])
+sel=find(model.average_3h==min(model.average_3h),1,'first');
+text(model.posix_time(sel),model.average_3h(sel),...
+    ' 3h-average',...
+    'VerticalAlignment','Bottom','Color',[0.8 0.8 0.8])
 
 % plot input data
 sel=~isnan(input.Rn);
