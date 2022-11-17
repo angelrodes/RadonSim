@@ -379,12 +379,13 @@ for n=1:n_models
     % calculate reduced chi square
     select=~isnan(model.average_24h(n,:)'-input.Rn);
     dof=sum(select)-4;
-    model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./input.Rn(select))/dof;
+    model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./(input.Rn(select)))/dof;
     
 end
 close(h)
 
 %% select best result
+% calculate best and one-sigma range
 select=find(model.red_chi_square==min(model.red_chi_square),1,'first');
 best_params=model.parameters(select,:); % min_Rn max_Rn venitlation_rate accumulation_rate
 bestmodel_concentrations=model.concentrations(select,:);
@@ -392,6 +393,18 @@ bestmodel_24h_average=model.average_24h(select,:);
 
 onesigma= (model.red_chi_square<min(model.red_chi_square)+1 );
 onesigma_params=model.parameters(onesigma,:);
+
+% check if model fits the data
+if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overlap or inverted
+    disp('----------------------')
+    warning('Apparently, model does not fit the data!')
+    disp('Air circulation does not reduce Rn levels significantly.')
+    sel=~isnan(model.average_3h);
+    data=model.average_3h(sel);
+    precis=ceil(log10(mean(data)))-floor(log10(std(data)/numel(unique(data))));
+    disp(['Average and SDOM [Rn] = ' num2str(mean(data),precis) ' ± ' num2str(std(data)/numel(unique(data)),1) ' Bq/m3'])
+end
+
 
 %% display results
 disp('----------------------')
