@@ -84,6 +84,10 @@ end
 disp(['    First data: ' num2str(input.numeric_time(1))])
 disp(['    Last update: ' num2str(input.numeric_time(end))])
 
+if min(diff(input.posix_time))<=0
+    warning('Data is not in chronological order!')
+end
+
 %% read air circulation data
 selectedfile=ventilation_file;
 
@@ -148,6 +152,10 @@ ventilation.open=strncmpi(ventilation.strings,'Open',4);
 
 disp(['    First data: ' num2str(ventilation.numeric_time(1))])
 disp(['    Last update: ' num2str(ventilation.numeric_time(end))])
+
+if min(diff(ventilation.posix_time))<=0
+    warning('Data is not in chronological order!')
+end
 
 %% define time space and day strings
 
@@ -277,10 +285,13 @@ for n=24*60*60/median(diff(model.posix_time)):numel(model.posix_time)
 end
 
 %% define number of models to run
-n_random_models=150;
-n_convergence=150;
-n_2s_models=300;
+n_models=1000;
+n_random_models=round(n_models/exp(1));
+n_convergence=round(n_models/exp(1)/3);
+n_2s_models=n_models-n_random_models-n_convergence;
 n_models=n_random_models+n_convergence+n_2s_models;
+percentage_mutations=5; % percentage of parameter values that are always radomized
+% mutations reduce the chance of convergence to local minimums
 
 %% define parameters
 minimum_rates=range(model.instant_Rn)/range(model.posix_time)/10;
@@ -305,7 +316,7 @@ model.average_24h=NaN.*zeros(n_models,numel(input.Rn));
 %% run models
 h = waitbar(0,'Running models...','Name','Running models');
 for n=1:n_models
-    if n>1
+    if n>1 && mod(n,10)==0
         waitbar(n/n_models,h,['n=' num2str(n) ' ; \chi^2_\nu=' num2str(min(model.red_chi_square),3)])
     end
     % recalculate parameters (convergence)
@@ -337,6 +348,12 @@ for n=1:n_models
         end
         model.parameters(n,:)=parameter_limits(1,:) .* ...
             ( parameter_limits(2,:)./parameter_limits(1,:) ).^rand(1,4);
+        if n<n_models % do not allow mutations in the last model
+            mutant_parameters=parameter_limits_0(1,:) .* ...
+                ( parameter_limits_0(2,:)./parameter_limits_0(1,:) ).^rand(1,4); % mutant parameter values do not converge
+            mutations=rand(1,4)<percentage_mutations/100; 
+            model.parameters(n,:)=model.parameters(n,:).*~mutations+mutant_parameters.*mutations;
+        end
     end
     model.parameters(n,1)=min(model.parameters(n,1), model.parameters(n,2)); % force min<=max
     params=model.parameters(n,:); % min_Rn max_Rn venitlation_rate accumulation_rate
@@ -405,6 +422,11 @@ if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overl
     disp(['Average and SDOM [Rn] = ' num2str(mean(data),precis) ' ± ' num2str(std(data)/numel(unique(data)),1) ' Bq/m3'])
 end
 
+% % plot evolution (testing)
+% figure; hold on
+% plot(1:numel(model.red_chi_square),model.parameters(:,3),'.b')
+% set(gca, 'YScale', 'log')
+% xlabel('model'); ylabel('ventilation rate')
 
 %% display results
 disp('----------------------')
@@ -420,22 +442,29 @@ disp('Useful information:')
 data=onesigma_params(:,1);
 precision=min(floor(log10(median(data))),floor(log10(range(data))));
 report=round(min(max(model.instant_Rn),median(data))/10^precision)*10^precision;
-disp(['    Background [Rn] level: ~' num2str(report) ' Bq/m3'])
+reportmin=round(min(max(model.instant_Rn),min(data))/10^precision)*10^precision;
+reportmax=round(min(max(model.instant_Rn),max(data))/10^precision)*10^precision;
+% disp(['    Background [Rn] level: ~' num2str(report) ' Bq/m3'])
+disp(['    Background [Rn] level: ' num2str(reportmin) '-' num2str(reportmax) ' Bq/m3'])
 data=onesigma_params(:,2);
 precision=min(floor(log10(median(data))),floor(log10(range(data))));
 report=round(min(max(model.instant_Rn),median(data))/10^precision)*10^precision;
-disp(['    Maximum    [Rn] level: ~' num2str(report) ' Bq/m3'])
+reportmin=round(min(max(model.instant_Rn),min(data))/10^precision)*10^precision;
+reportmax=round(min(max(model.instant_Rn),max(data))/10^precision)*10^precision;
+% disp(['    Maximum    [Rn] level: ~' num2str(report) ' Bq/m3'])
+disp(['    Maximum    [Rn] level: ' num2str(reportmin) '-' num2str(reportmax) ' Bq/m3'])
 ventilation_time=(onesigma_params(:,2)-onesigma_params(:,1))./onesigma_params(:,3);
 % disp(['    Effective ventilation time needed to flush Rn: ' num2str(floor(min(ventilation_time)/60/60)) ' to ' num2str(ceil(max(ventilation_time)/60/60)) ' hours'])
-disp(['    Effective ventilation time needed to flush Rn: ~' num2str(round(max(1,median(ventilation_time)/60/60))) ' hours'])
+% disp(['    Effective ventilation time needed to flush Rn: ~' num2str(round(max(1,median(ventilation_time)/60/60))) ' hours'])
+disp(['    Effective ventilation time needed to flush Rn: ' num2str(floor(min(ventilation_time)/60/60)) '-' num2str(ceil(max(ventilation_time)/60/60)) ' hours'])
 accumulation_time=(300-onesigma_params(:,1))./onesigma_params(:,4);
 if best_params(1)<300
     if best_params(2)<300
         disp(['    Safe maximum Rn concentrations.'])
     else
         % disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(min(accumulation_time)/60/60)) ' to ' num2str(ceil(max(accumulation_time)/60/60)) ' hours'])
-        disp(['    Maximum accumulation time with safe Rn levels: ~' num2str(round(max(1,median(accumulation_time)/60/60))) ' hours'])
-        
+%         disp(['    Maximum accumulation time with safe Rn levels: ~' num2str(round(max(1,median(accumulation_time)/60/60))) ' hours'])
+                disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(min(accumulation_time)/60/60)) '-' num2str(ceil(max(accumulation_time)/60/60)) ' hours'])
     end
 else
     disp(['    Unsafe minimum Rn concentrations.'])
