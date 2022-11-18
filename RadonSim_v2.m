@@ -295,7 +295,7 @@ percentage_mutations=5; % percentage of parameter values that are always radomiz
 
 %% define parameters
 minimum_rates=range(model.instant_Rn)/range(model.posix_time)/10;
-maximum_rates=range(model.instant_Rn)/min(diff(model.posix_time));
+maximum_rates=range(model.instant_Rn)/min(diff(model.posix_time))*10;
 minimum_Rn=10;
 maximum_Rn=max(model.instant_Rn)*10;
 % min_Rn max_Rn venitlation_rate accumulation_rate
@@ -314,7 +314,7 @@ model.red_chi_square=NaN.*zeros(n_models,1);
 model.average_24h=NaN.*zeros(n_models,numel(input.Rn));
 
 %% run models
-h = waitbar(0,'Running models...','Name','Running models');
+h = waitbar(0,'Running models...','Name',['Running ' num2str(n_models) ' models']);
 for n=1:n_models
     if n>1 && mod(n,10)==0
         waitbar(n/n_models,h,['n=' num2str(n) ' ; \chi^2_\nu=' num2str(min(model.red_chi_square),3)])
@@ -422,11 +422,27 @@ if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overl
     disp(['Average and SDOM [Rn] = ' num2str(mean(data),precis) ' ± ' num2str(std(data)/numel(unique(data)),1) ' Bq/m3'])
 end
 
-% % plot evolution (testing)
-% figure; hold on
-% plot(1:numel(model.red_chi_square),model.parameters(:,3),'.b')
-% set(gca, 'YScale', 'log')
-% xlabel('model'); ylabel('ventilation rate')
+testing=1; % plot distribution of parameter values
+if testing==1
+    % plot evolution (testing)
+    figure; hold on
+    plot(1:numel(model.red_chi_square),model.red_chi_square,'.b')
+    plot(1:numel(model.red_chi_square),model.parameters(:,1),'.','Color',[0.8 0.8 0.8])
+    plot(1:numel(model.red_chi_square),model.parameters(:,2),'.','Color',[0.5 0.5 0.3])
+    plot(1:numel(model.red_chi_square),model.parameters(:,3),'.r')
+    plot(1:numel(model.red_chi_square),model.parameters(:,4),'.g')
+    set(gca, 'YScale', 'log')
+    xlabel('model'); legend('\chi^2_\nu','minRn','maxRn','vent.','accum')
+    
+    % plot parameter distribution (testing)
+    figure; hold on
+    plot(model.parameters(:,1),model.red_chi_square,'.','Color',[0.8 0.8 0.8])
+    plot(model.parameters(:,2),model.red_chi_square,'.','Color',[0.5 0.5 0.3])
+    plot(model.parameters(:,3),model.red_chi_square,'.r')
+    plot(model.parameters(:,4),model.red_chi_square,'.g')
+    set(gca, 'XScale', 'log'); ylim(min(model.red_chi_square)+[-1 3])
+    ylabel('\chi^2_\nu'); legend('minRn','maxRn','vent.','accum')
+end
 
 %% display results
 disp('----------------------')
