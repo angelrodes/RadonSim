@@ -13,6 +13,15 @@ disp('Downlaod csv from:')
 disp('    https://dashboard.airthings.com/devices/')
 
 
+%% define number of models to run
+n_models=3000;
+n_random_models=round(n_models/exp(1)); % purely random
+n_convergence=round(n_models/exp(1)/3); % converge to the top (best) 10% of the models
+n_2s_models=n_models-n_random_models-n_convergence; % converge to 2 sigma
+n_models=n_random_models+n_convergence+n_2s_models;
+percentage_mutations=5; % percentage of parameter values that are always radomized
+% mutations reduce the chance of convergence to local minimums
+
 %% Select files (Radon data and air circulation)
 
 % radon_data_file='2930129618-latest(47).csv';
@@ -284,14 +293,7 @@ for n=24*60*60/median(diff(model.posix_time)):numel(model.posix_time)
     model.instant_averaged_24h(n)=mean(data);
 end
 
-%% define number of models to run
-n_models=1000;
-n_random_models=round(n_models/exp(1));
-n_convergence=round(n_models/exp(1)/3);
-n_2s_models=n_models-n_random_models-n_convergence;
-n_models=n_random_models+n_convergence+n_2s_models;
-percentage_mutations=5; % percentage of parameter values that are always radomized
-% mutations reduce the chance of convergence to local minimums
+
 
 %% define parameters
 minimum_rates=range(model.instant_Rn)/range(model.posix_time)/10;
@@ -393,10 +395,13 @@ for n=1:n_models
     model.average_24h(n,:)=interp1(model.posix_time(sel),C24h(sel),input.posix_time);
     %     toc
     
-    % calculate reduced chi square
+    % calculate reduced chi square (GOODNES OF EACH FIT)
     select=~isnan(model.average_24h(n,:)'-input.Rn);
     dof=sum(select)-4;
-    model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./(input.Rn(select)))/dof;
+    %     model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./(input.Rn(select)))/dof;
+    % assumed 10% uncertainty in the 24h average values according to Airthings:
+    % https://help.airthings.com/en/articles/3727185-i-have-2-monitors-beside-each-other-and-they-show-different-radon-values-how-is-that-possible
+    model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./(input.Rn(select)*0.1).^2)/dof;
     
 end
 close(h)
@@ -448,7 +453,7 @@ end
 disp('----------------------')
 disp('Fitting results and [one sigma range]:')
 disp(['    Reduced chi-squared: ' num2str(min(model.red_chi_square))])
-disp(['    N models in 1-sigma: ' num2str(sum(onesigma))])
+disp(['    N models in 1-sigma: ' num2str(sum(onesigma)) ' of ' num2str(n_models)])
 disp(['    [Rn]min: ' num2str(best_params(1),3) ' [' num2str(min(onesigma_params(:,1)),3) '-' num2str(max(onesigma_params(:,1)),3) '] Bq/m3'])
 disp(['    [Rn]max: ' num2str(best_params(2),3) ' [' num2str(min(onesigma_params(:,2)),3) '-' num2str(max(onesigma_params(:,2)),3) '] Bq/m3'])
 disp(['    Ventilation  rate: ' num2str(best_params(3)*60*60,3) ' [' num2str(min(onesigma_params(:,3))*60*60,3) '-' num2str(max(onesigma_params(:,3))*60*60,3) '] Bq/m3/h'])
