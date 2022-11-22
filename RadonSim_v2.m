@@ -398,7 +398,6 @@ for n=1:n_models
     % calculate reduced chi square (GOODNES OF EACH FIT)
     select=~isnan(model.average_24h(n,:)'-input.Rn);
     dof=sum(select)-4;
-    %     model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./(input.Rn(select)))/dof;
     % assumed 10% uncertainty in the 24h average values according to Airthings:
     % https://help.airthings.com/en/articles/3727185-i-have-2-monitors-beside-each-other-and-they-show-different-radon-values-how-is-that-possible
     model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./(input.Rn(select)*0.1).^2)/dof;
