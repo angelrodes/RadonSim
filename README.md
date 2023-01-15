@@ -48,9 +48,9 @@ The script calculates and plots the 1h-recorded Radon data from the 24h-average 
 The main purpose of the script is fitting a simple model to calculate the following paramenters:
 
 * Maximum Radon concentration (Bq/m3) room is not ventilated for a long time.
-* Maximum Radon concentration (Bq/m3) If the room is well ventilated.
+* Minimum Radon concentration (Bq/m3) If the room is well ventilated.
 * Ventilation rate (Bq/m3/h). Speed at with the Radon is eliminated when the air is circulating in the room.
-* Accumulation rate (Bq/m3/h). Speed at with the Radon is accumulated in the room when the window is closed.
+* Accumulation rate (Bq/m3/h). Speed at with the Radon is accumulated in the room when the windows are closed.
 
 This model is fitted in the data using a converging Mote-Carlo inverse-modeling method using a similar approach as in [Rodés *et al.* (2014)](https://doi.org/10.1016/j.quageo.2013.10.002).
 
