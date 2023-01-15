@@ -75,14 +75,16 @@ However, some of us are very impatient and want to use their porduts to test the
 
 As these detectors calculate the Radon concentrations based on alpha particle counting, the **precission** of the measurments will be affected by counting statistics. Therefore, to estimate the uncertainty of the short term measurements, I will assume that the uncertainty will be reresented by the formula ```100/N^0.5```, where ```N``` is the number of events (alpha decays) counted by the detector.
 
-If we assume a conserviative precision of [10% on the reported 24h measurements](https://help.airthings.com/en/articles/3727185-i-have-2-monitors-beside-each-other-and-they-show-different-radon-values-how-is-that-possible), "instant" 1h-data should yield about 50% uncertainties. Obviusly, this uncertainty shuld decrease with higher Radon concentrations. In our initial tests, the scatter of the generated 1h-data seem to rougly reflect these 50% uncertainties for values around 500 Bq/m3 (see last plot above). This implies that, *very rougly*, 1 event is detected per hour for each 100 Bq/m3 concentration. This value correspond to an effective detection chamber of c. 3 cubic centimeters.
+If we assume a conserviative precision of [10% on the reported 24h measurements](https://help.airthings.com/en/articles/3727185-i-have-2-monitors-beside-each-other-and-they-show-different-radon-values-how-is-that-possible), "instant" 1h-data should yield about 50% uncertainties. Obviusly, this uncertainty shuld decrease with higher Radon concentrations. In our initial tests, the scatter of the generated 1h-data seem to rougly reflect these 50% uncertainties for values around 500 Bq/m3. This implies that, *very rougly*, 1 event is detected per hour for each 100 Bq/m3 concentration. This value correspond to an effective detection chamber of c. 3 cubic centimeters.
 
 Scatter of the "1h data" in our initial tests and assumed uncertainty based on 1 count per 100 Bq/m3:
 
 ![image](https://user-images.githubusercontent.com/53089531/192155481-4bb32e3d-6e3a-43b5-9bd9-f633d1359bd3.png)
 
-Following the same principle, 6h moving averages (solid green line in the plot below) should have around 20% uncertainties (dashed green lines). Uncertainties are calculated assuming  ``` N = [Rn]/100 * Δt```, being ```[Rn]``` the concentration in Bq/m3 and ```Δt``` the number of 1h data points considered.
+Following the same principle, 3h moving averages (solid green line in the plot below) should have around 25% uncertainties. Uncertainties are calculated assuming  ``` N = [Rn]/100 * Δt```, being ```[Rn]``` the concentration in Bq/m3 and ```Δt``` the number of 1h data points considered.
 
+<!---
 ![image](https://user-images.githubusercontent.com/53089531/192155570-eee26339-dc1d-4f6a-90d3-a38e16f0e873.png)
 
 **6h moving average is plotted to test short-term "experiments".** This value is calculated as an average of 7 1h-data-points: from 3 hours before to 3 hours after. Therefore, **this is a moving average, not the average of the previous 6 hours.** Consequently, first and last 6h averages are the average of the first and last 4 data points respectively.
+--->
