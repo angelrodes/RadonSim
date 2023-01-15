@@ -1,6 +1,6 @@
 # RadonSim
 
-A script written in Matlab/Octave, utilizing data obtained from the Airthings Wave Air Quality Monitor and supplementary ventilation data input by the user, is employed to analyze the behavior of Radon gas within specific rooms. Through the utilization of this data, a ventilation pattern is proposed to **significantly reduce the risk of lung cancer**.
+A script written in Matlab/Octave, utilizing data obtained from the Airthings Wave Air Quality Monitor and supplementary ventilation data input by the user, is employed to analyze the behavior of radon gas within specific rooms. Through the utilization of this data, a ventilation pattern is proposed to **significantly reduce the risk of lung cancer**.
 
 ***This program is part of a work in progress. I will provide the reference for citation as soon as we publish it.***
 
@@ -9,7 +9,7 @@ A script written in Matlab/Octave, utilizing data obtained from the Airthings Wa
 
 ## How to use
 
-### Get Radon data
+### Get radon data
 
 1. Follow the instructions from your Airthings Wave Plus monitor to setup the app in your phone. Create a new account if you don't have one.
 2. After a few hours, you can log in and see your data online at [dashboard.airthings.com](https://dashboard.airthings.com/)
@@ -39,7 +39,7 @@ The script will ask for the CSV files. Two files are given as example:
 
 ![Screenshot at 2023-01-15 14-29-24](https://user-images.githubusercontent.com/53089531/212543552-89833092-6141-4697-a2be-4b1f34995234.png)
 
-The Radon data provided by the device is depicted vby a thick black line.
+The radon data provided by the device is depicted vby a thick black line.
 
 The ventilation pattern is drwan in blue at the top of the figure.
 
