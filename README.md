@@ -1,6 +1,6 @@
 # RadonSim
 
-A script written in the programming languages Matlab or Octave, utilizing data obtained from the Airthings Wave Air Quality Monitor and supplementary ventilation data input by the user, is employed to analyze the behavior of Radon gas within specific rooms. Through the utilization of this data, a ventilation pattern is proposed to **significantly reduce the risk of lung cancer**.
+A script written in Matlab/Octave, utilizing data obtained from the Airthings Wave Air Quality Monitor and supplementary ventilation data input by the user, is employed to analyze the behavior of Radon gas within specific rooms. Through the utilization of this data, a ventilation pattern is proposed to **significantly reduce the risk of lung cancer**.
 
 ***This program is part of a work in progress. I will provide the reference for citation as soon as we publish it.***
 
