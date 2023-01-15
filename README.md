@@ -39,7 +39,7 @@ The script will ask for the CSV files. Two files are given as example:
 
 ![Screenshot at 2023-01-15 14-29-24](https://user-images.githubusercontent.com/53089531/212543552-89833092-6141-4697-a2be-4b1f34995234.png)
 
-The raw Radon data is depicted vby a thick black line.
+The Radon data provided by the device is depicted vby a thick black line.
 
 The ventilation pattern is drwan in blue at the top of the figure.
 
@@ -56,7 +56,7 @@ This model is fitted in the data using a converging Mote-Carlo inverse-modeling 
 
 Best fitting model is depicted in blue. 24h average corresponding to this model is depicted in magenta.
 
-Best-fitting parameters and one-sigma ranges are diplayed in the text output, toguther with some useful (and very simplified) information: 
+Best-fitting parameters and one-sigma ranges are diplayed in the text output, together with some useful (and very simplified) information: 
 
 * How much time we need to ventilate to flush the Radon in the room.
 * After ventilating and closing the window, how much time we can stay in the room with Radon concentrations [below 300 Bq/m3](https://www.who.int/data/gho/indicator-metadata-registry/imr-details/5618).
