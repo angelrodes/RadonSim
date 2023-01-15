@@ -1,8 +1,8 @@
 # RadonSim
 
-A Matlab/Octave script that uses the data provided by Airthings Wave air quality monitor, together with ventilation data provided by the user, to .
+A script written in the programming languages Matlab or Octave, utilizing data obtained from the Airthings Wave Air Quality Monitor and supplementary ventilation data input by the user, is employed to analyze the behavior of Radon gas within specific rooms. Through the utilization of this data, a ventilation pattern is proposed to **significantly reduce the risk of lung cancer**.
 
-**This program is part of a work in progress. I will provide the reference for citation as soon as we publish it.**
+***This program is part of a work in progress. I will provide the reference for citation as soon as we publish it.***
 
 Ángel Rodés, 2022 \
 [www.angelrodes.com](https://www.angelrodes.com/)
@@ -19,7 +19,7 @@ A Matlab/Octave script that uses the data provided by Airthings Wave air quality
 ### Create ventilation data
 
 1. Use the template provided in the spreadsheet to record when you open or close the window in the room.
-2. Using the same spreadsheet, create the csv air-circulation file. Note the format in the example given and the make sure you are using the same time zone as in the radon data file, usually [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time).
+2. Using the same spreadsheet, create the csv air-circulation file. Note the format in the example given and make sure you are using the same time zone as in the radon data file, usually [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time).
 
 ### Fit the model and plot your data
 
