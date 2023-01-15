@@ -18,7 +18,7 @@ A script written in the programming languages Matlab or Octave, utilizing data o
 
 ### Create ventilation data
 
-1. Use the template provided in the spreadsheet to record when you open or close the window in the room.
+1. Use the template ```Air-ventilation-template.xlsx``` in the spreadsheet to record when you open or close the window in the room.
 2. Using the same spreadsheet, create the csv air-circulation file. Note the format in the example given and make sure you are using the same time zone as in the radon data file, usually [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time).
 
 ### Fit the model and plot your data
