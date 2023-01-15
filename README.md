@@ -52,7 +52,7 @@ The main purpose of the script is fitting a simple model to calculate the follow
 * Ventilation rate (Bq/m3/h). Speed at with the Radon is eliminated when the air is circulating in the room.
 * Accumulation rate (Bq/m3/h). Speed at with the Radon is accumulated in the room when the window is closed.
 
-This model is fitted in the data using a converging Mote-Carlo method using a similar approach as in [Rodés *et al.* (2014)](https://doi.org/10.1016/j.quageo.2013.10.002).
+This model is fitted in the data using a converging Mote-Carlo inverse-modeling method using a similar approach as in [Rodés *et al.* (2014)](https://doi.org/10.1016/j.quageo.2013.10.002).
 
 Best fitting model is depicted in blue. 24h average corresponding to this model is depicted in magenta.
 
