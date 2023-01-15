@@ -37,6 +37,8 @@ The script will ask for the CSV files. Two files are given as example:
 
 ## Output
 
+![Screenshot at 2023-01-15 14-29-24](https://user-images.githubusercontent.com/53089531/212543552-89833092-6141-4697-a2be-4b1f34995234.png)
+
 The raw Radon data is depicted vby a thick black line.
 
 The ventilation pattern is drwan in blue at the top of the figure.
