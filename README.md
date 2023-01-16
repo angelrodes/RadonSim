@@ -86,11 +86,11 @@ recorded;info
 
 If you have a different model of radon-meter you might get other data, or data separated by comma (,) instead of semicolon (;). If that is the case, you can change the ```delimiter``` in the ```textscan``` functions, or the data acquisition code below that.
 
-## Calculated short-term radon concentration data
+## Short-term radon concentration data
 
 Airthings detectors are [designed, made and sold to collect long term averages](https://help.airthings.com/en/articles/3119759-radon-how-is-radon-measured-how-does-an-airthings-device-measure-radon). That is why the detector reports 24h averages. Actually, [Airthings](https://www.airthings.com/) recommends to use their productos for a month to get accurate measurements.
 
-However, some of us are very impatient and want to use their porduts to test the mitigation actions we take in our houses and offices (e.g. opening windows) in a much shorter term. Of course, this means that **we should forget about accuracy here**.
+However, some of us are very impatient and want to use their porduts to test the mitigation actions we take in our houses and offices in a much shorter term (e.g. opening windows). Of course, this means that **we should forget about accuracy here**.
 
 As these detectors calculate the Radon concentrations based on alpha particle counting, the **precission** of the measurments will be affected by counting statistics. Therefore, to estimate the uncertainty of the short term measurements, I will assume that the precentage of uncertainty will be reresented by the formula ```100/N^0.5```, where ```N``` is the number of events (alpha decays) counted by the detector.
 
