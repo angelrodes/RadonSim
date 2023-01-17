@@ -61,6 +61,24 @@ Best-fitting parameters and one-sigma ranges are diplayed in the text output, to
 * How much time we need to ventilate to flush the Radon in the room.
 * After ventilating and closing the window, how much time we can stay in the room with Radon concentrations [below 300 Bq/m3](https://www.who.int/data/gho/indicator-metadata-registry/imr-details/5618).
 
+Example text output:
+
+```
+Fitting results and [one sigma range]:
+    Reduced chi-squared: 19.9812
+    N models in 1-sigma: 137 of 3000
+    [Rn]min: 43.7 [35.7-50.4] Bq/m3
+    [Rn]max: 663 [569-794] Bq/m3
+    Ventilation  rate: 203 [108-1.64e+05] Bq/m3/h
+    Accumulation rate: 19.8 [15.7-23] Bq/m3/h
+----------------------
+Useful information:
+    Background [Rn] level: 36-50 Bq/m3
+    Maximum    [Rn] level: 570-790 Bq/m3
+    Effective ventilation time needed to flush Rn: 0-1 hours
+    Maximum accumulation time with safe Rn levels: 11-15 hours
+```
+
 ## Potential issues
 
 Your csv files should look like this:
