@@ -332,14 +332,15 @@ for n=1:n_models
                     max(model.parameters(select,:)).*expand_limits ...
                     ];
         else
-            if sum(model.red_chi_square<min(model.red_chi_square)+2)>8
+            desired_min_n_fitting_models=max(round(n/100),16);
+            if sum(model.red_chi_square<min(model.red_chi_square)+2)>desired_min_n_fitting_models
                 parameter_limits=[...
                     min(model.parameters(model.red_chi_square<min(model.red_chi_square)+2,:)) ; ...
                     max(model.parameters(model.red_chi_square<min(model.red_chi_square)+2,:)) ...
                     ];
             else
                 sorted_red_chi_square=sort(model.red_chi_square);
-                select=model.red_chi_square<=sorted_red_chi_square(8);
+                select=model.red_chi_square<=sorted_red_chi_square(desired_min_n_fitting_models);
                 parameter_limits=[...
                     min(model.parameters(select,:)) ; ...
                     max(model.parameters(select,:)) ...
@@ -363,7 +364,7 @@ for n=1:n_models
     %     disp('calculate model')
     %     tic
     for m=1:numel(model.ventilated)
-        if m==1
+        if m==1         
             concentration=params(1)*(model.ventilated(1)==1)+params(2)*(model.ventilated(1)==0);
         elseif model.ventilated(m)==0
             concentration=concentration+params(4)*(model.posix_time(m)-model.posix_time(m-1));
@@ -410,8 +411,20 @@ best_params=model.parameters(select,:); % min_Rn max_Rn venitlation_rate accumul
 bestmodel_concentrations=model.concentrations(select,:);
 bestmodel_24h_average=model.average_24h(select,:);
 
-onesigma= (model.red_chi_square<min(model.red_chi_square)+1 );
+onesigma=(model.red_chi_square<min(model.red_chi_square)+1);
+minimum_models_in_one_sigma=min(30,round(n_models/100));
+if sum(onesigma)<minimum_models_in_one_sigma % if there are not many models in one-sigma, just take more
+    sortedchi=sort(model.red_chi_square);
+    maxchi=sortedchi(minimum_models_in_one_sigma+1);
+    onesigma= (model.red_chi_square<maxchi);
+else
+    maxchi=min(model.red_chi_square)+1;
+end
 onesigma_params=model.parameters(onesigma,:);
+
+chisqpdf=@(x,dof)1./(2.^(dof/2)*gamma(dof/2)).*x.^(dof/2).*exp(-x/2);
+model.probabilities=chisqpdf(model.red_chi_square,1); % this is > 0 even with very low GOF
+model.one_sigma_prob=chisqpdf(maxchi,1);
 
 % check if model fits the data
 if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overlap or inverted
@@ -424,33 +437,45 @@ if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overl
     disp(['Average and SDOM [Rn] = ' num2str(mean(data),precis) ' ± ' num2str(std(data)/numel(unique(data)),1) ' Bq/m3'])
 end
 
-testing=1; % plot distribution of parameter values
+testing=1; % plot evolution, probabilites, etc.
 if testing==1
     % plot evolution (testing)
     figure; hold on
     plot(1:numel(model.red_chi_square),model.red_chi_square,'.b')
     plot(1:numel(model.red_chi_square),model.parameters(:,1),'.','Color',[0.8 0.8 0.8])
     plot(1:numel(model.red_chi_square),model.parameters(:,2),'.','Color',[0.5 0.5 0.3])
-    plot(1:numel(model.red_chi_square),model.parameters(:,3),'.r')
-    plot(1:numel(model.red_chi_square),model.parameters(:,4),'.g')
+    plot(1:numel(model.red_chi_square),model.parameters(:,3)*60*60,'.r')
+    plot(1:numel(model.red_chi_square),model.parameters(:,4)*60*60,'.g')
     set(gca, 'YScale', 'log')
     xlabel('model'); legend('\chi^2_\nu','minRn','maxRn','vent.','accum')
     
     % plot parameter distribution (testing)
     figure; hold on
-    plot(model.parameters(:,1),model.red_chi_square,'.','Color',[0.8 0.8 0.8])
-    plot(model.parameters(:,2),model.red_chi_square,'.','Color',[0.5 0.5 0.3])
-    plot(model.parameters(:,3),model.red_chi_square,'.r')
-    plot(model.parameters(:,4),model.red_chi_square,'.g')
-    set(gca, 'XScale', 'log'); ylim(min(model.red_chi_square)+[-1 3])
-    ylabel('\chi^2_\nu'); legend('minRn','maxRn','vent.','accum')
+    plot(model.parameters(:,1),model.probabilities,'.','Color',[0.8 0.8 0.8])
+    plot(model.parameters(:,2),model.probabilities,'.','Color',[0.5 0.5 0.3])
+    plot(model.parameters(:,3)*60*60,model.probabilities,'.r')
+    plot(model.parameters(:,4)*60*60,model.probabilities,'.g')
+    set(gca, 'XScale', 'log'); ylim([0 max(model.probabilities)*1.2])
+    ylabel('P(\chi^2_\nu)'); legend('minRn','maxRn','vent.','accum')
+
+    figure; hold on
+    plot(((model.parameters(:,2)-model.parameters(:,1))./model.parameters(:,3))/60/60,model.probabilities,'.b')
+    plot([0 5],model.one_sigma_prob*[1 1],'-g')
+    xlabel('Ventilation time (h)')
+    ylabel('P')
+    %     set(gca, 'XScale', 'log')
+    xlim([0 5])
 end
 
 %% display results
 disp('----------------------')
 disp('Fitting results and [one sigma range]:')
-disp(['    Reduced chi-squared: ' num2str(min(model.red_chi_square))])
-disp(['    N models in 1-sigma: ' num2str(sum(onesigma)) ' of ' num2str(n_models)])
+disp(['    Reduced chi-squared: [' num2str(round(min(model.red_chi_square)*10)/10) '-' num2str(round(maxchi*10)/10) ']'])
+if sum(onesigma)>=min(30,n_models/100)
+    disp(['    N models in 1-sigma: ' num2str(sum(onesigma)) ' of ' num2str(n_models)])
+else
+    warning(['N models in 1-sigma: only ' num2str(sum(onesigma)) ' of ' num2str(n_models)])
+end
 disp(['    [Rn]min: ' num2str(best_params(1),3) ' [' num2str(min(onesigma_params(:,1)),3) '-' num2str(max(onesigma_params(:,1)),3) '] Bq/m3'])
 disp(['    [Rn]max: ' num2str(best_params(2),3) ' [' num2str(min(onesigma_params(:,2)),3) '-' num2str(max(onesigma_params(:,2)),3) '] Bq/m3'])
 disp(['    Ventilation  rate: ' num2str(best_params(3)*60*60,3) ' [' num2str(min(onesigma_params(:,3))*60*60,3) '-' num2str(max(onesigma_params(:,3))*60*60,3) '] Bq/m3/h'])
@@ -484,6 +509,8 @@ if best_params(1)<300
         % disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(min(accumulation_time)/60/60)) ' to ' num2str(ceil(max(accumulation_time)/60/60)) ' hours'])
 %         disp(['    Maximum accumulation time with safe Rn levels: ~' num2str(round(max(1,median(accumulation_time)/60/60))) ' hours'])
                 disp(['    Maximum accumulation time with safe Rn levels: ' num2str(max(0,floor((median(accumulation_time)-std(accumulation_time))/60/60))) '-' num2str(max(1,ceil((median(accumulation_time)+std(accumulation_time))/60/60))) ' hours'])
+                disp(' ')
+                disp(['Please, keep the room ventilated for at least ' num2str(ceil(median(ventilation_time)/60/10)*10) ' minutes every ' num2str(round(median(accumulation_time)/60/60)) ' hours.'])
     end
 else
     disp(['    Unsafe minimum Rn concentrations.'])
@@ -540,8 +567,10 @@ text(model.posix_time(sel),bestmodel_concentrations(sel),...
 
 % plot dangerous level
 plot(input.posix_time,input.posix_time.*0+300,'--r','LineWidth',1)
-text(mean(model.posix_time),300,'Maximum safe level',...
-    'VerticalAlignment','Bottom','HorizontalAlignment','Center','Color','r')
+% text(mean(model.posix_time),300,'Maximum safe level',...
+%     'VerticalAlignment','Bottom','HorizontalAlignment','Center','Color','r')
+text(min(model.posix_time),300,'Maximum safe level',...
+    'VerticalAlignment','Bottom','HorizontalAlignment','Left','Color','r')
 
 % plot ventilation
 sel=model.ventilated==1;
