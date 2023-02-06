@@ -14,9 +14,9 @@ disp('    https://dashboard.airthings.com/devices/')
 
 
 %% define number of models to run
-n_models=3000;
+n_models=5000;
 n_random_models=round(n_models/exp(1)); % purely random
-n_convergence=round(n_models/exp(1)/3); % converge to the top (best) 10% of the models
+n_convergence=round(n_models/exp(1)/2); % converge to the top (best) 10% of the models
 n_2s_models=n_models-n_random_models-n_convergence; % converge to 2 sigma
 n_models=n_random_models+n_convergence+n_2s_models;
 percentage_mutations=5; % percentage of parameter values that are always radomized
@@ -440,31 +440,32 @@ end
 testing=1; % plot evolution, probabilites, etc.
 if testing==1
     % plot evolution (testing)
-    figure; hold on
+    figure; hold on; box on
     plot(1:numel(model.red_chi_square),model.red_chi_square,'.b')
     plot(1:numel(model.red_chi_square),model.parameters(:,1),'.','Color',[0.8 0.8 0.8])
     plot(1:numel(model.red_chi_square),model.parameters(:,2),'.','Color',[0.5 0.5 0.3])
     plot(1:numel(model.red_chi_square),model.parameters(:,3)*60*60,'.r')
     plot(1:numel(model.red_chi_square),model.parameters(:,4)*60*60,'.g')
     set(gca, 'YScale', 'log')
-    xlabel('model'); legend('\chi^2_\nu','minRn','maxRn','vent.','accum')
+    xlabel('model'); legend('\chi^2_\nu','minRn (Bq/m3)','maxRn (Bq/m3)','vent. (Bq/m3/h)','accum (Bq/m3/h)')
     
     % plot parameter distribution (testing)
-    figure; hold on
+    figure; hold on; box on
+    plot([min(min(model.parameters)) max(max(model.parameters))],model.one_sigma_prob*[1 1],':k')
     plot(model.parameters(:,1),model.probabilities,'.','Color',[0.8 0.8 0.8])
     plot(model.parameters(:,2),model.probabilities,'.','Color',[0.5 0.5 0.3])
     plot(model.parameters(:,3)*60*60,model.probabilities,'.r')
     plot(model.parameters(:,4)*60*60,model.probabilities,'.g')
     set(gca, 'XScale', 'log'); ylim([0 max(model.probabilities)*1.2])
-    ylabel('P(\chi^2_\nu)'); legend('minRn','maxRn','vent.','accum')
+    ylabel('P(\chi^2_\nu)'); legend('\chi^2_\nu','minRn (Bq/m3)','maxRn (Bq/m3)','vent. (Bq/m3/h)','accum (Bq/m3/h)')
 
-    figure; hold on
-    plot(((model.parameters(:,2)-model.parameters(:,1))./model.parameters(:,3))/60/60,model.probabilities,'.b')
-    plot([0 5],model.one_sigma_prob*[1 1],'-g')
-    xlabel('Ventilation time (h)')
+    figure; hold on; box on
+    plot(((model.parameters(:,2)-model.parameters(:,1))./model.parameters(:,3))/60,model.probabilities,'.b')
+    plot([0 5*60],model.one_sigma_prob*[1 1],':k')
+    xlabel('Ventilation time (min)')
     ylabel('P')
     %     set(gca, 'XScale', 'log')
-    xlim([0 5])
+    xlim([0 5*60])
 end
 
 %% display results
@@ -516,7 +517,6 @@ if best_params(1)<300
                     disp(['Please, keep the room ventilated for at least ' num2str(ceil(median(ventilation_time)/60/10)*10) ' minutes every ' num2str(round(median(accumulation_time)/60/60)) ' hours.'])
                 else
                     disp('Please, keep the room ventilated at all times!')
-                
                 end
     end
 else
@@ -597,4 +597,3 @@ ylim([0 max_y_plot*1.2])
 ylabel('Rn (Bq/m^3)')
 box on
 grid on
-
