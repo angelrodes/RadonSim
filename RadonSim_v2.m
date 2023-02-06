@@ -483,14 +483,16 @@ disp(['    Accumulation rate: ' num2str(best_params(4)*60*60,3) ' [' num2str(min
 disp('----------------------')
 disp('Useful information:')
 data=onesigma_params(:,1);
-precision=max(0,min(floor(log10(median(data))),floor(log10(range(data))))-1);
+% precision=max(0,min(floor(log10(median(data))),floor(log10(range(data))))-1);
+precision=2;
 report=round(min(max(model.instant_Rn),median(data))/10^precision)*10^precision;
 reportmin=round(min(max(model.instant_Rn),min(data))/10^precision)*10^precision;
 reportmax=round(min(max(model.instant_Rn),max(data))/10^precision)*10^precision;
 % disp(['    Background [Rn] level: ~' num2str(report) ' Bq/m3'])
 disp(['    Background [Rn] level: ' num2str(reportmin) '-' num2str(reportmax) ' Bq/m3'])
 data=onesigma_params(:,2);
-precision=max(0,min(floor(log10(median(data))),floor(log10(range(data))))-1);
+% precision=max(0,min(floor(log10(median(data))),floor(log10(range(data))))-1);
+precision=2;
 report=round(min(max(model.instant_Rn),median(data))/10^precision)*10^precision;
 reportmin=round(min(max(model.instant_Rn),min(data))/10^precision)*10^precision;
 reportmax=round(min(max(model.instant_Rn),max(data))/10^precision)*10^precision;
@@ -510,7 +512,12 @@ if best_params(1)<300
 %         disp(['    Maximum accumulation time with safe Rn levels: ~' num2str(round(max(1,median(accumulation_time)/60/60))) ' hours'])
                 disp(['    Maximum accumulation time with safe Rn levels: ' num2str(max(0,floor((median(accumulation_time)-std(accumulation_time))/60/60))) '-' num2str(max(1,ceil((median(accumulation_time)+std(accumulation_time))/60/60))) ' hours'])
                 disp(' ')
-                disp(['Please, keep the room ventilated for at least ' num2str(ceil(median(ventilation_time)/60/10)*10) ' minutes every ' num2str(round(median(accumulation_time)/60/60)) ' hours.'])
+                if round(median(accumulation_time)/60/60)>0
+                    disp(['Please, keep the room ventilated for at least ' num2str(ceil(median(ventilation_time)/60/10)*10) ' minutes every ' num2str(round(median(accumulation_time)/60/60)) ' hours.'])
+                else
+                    disp('Please, keep the room ventilated at all times!')
+                
+                end
     end
 else
     disp(['    Unsafe minimum Rn concentrations.'])
@@ -590,3 +597,4 @@ ylim([0 max_y_plot*1.2])
 ylabel('Rn (Bq/m^3)')
 box on
 grid on
+
