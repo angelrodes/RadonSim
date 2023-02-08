@@ -293,16 +293,16 @@ end
 
 
 
-%% define parameters
+%% define parameters min_Rn max_Rn venitlation_rate accumulation_rate
 minimum_rates=range(model.instant_Rn)/range(model.posix_time)/10;
 maximum_rates=range(model.instant_Rn)/min(diff(model.posix_time))*10;
-minimum_Rn=10;
-maximum_Rn=max(model.instant_Rn)*10;
+minimum_Rn=min(model.instant_Rn(model.instant_Rn>0))*2;
+maximum_Rn=max(model.instant_Rn)*2;
 % min_Rn max_Rn venitlation_rate accumulation_rate
 % first line = minimum values ; second line = maximum value
 parameter_limits_0=[...
-    minimum_Rn minimum_Rn minimum_rates minimum_rates ;...
-    maximum_Rn maximum_Rn maximum_rates maximum_rates ...
+    1          1          minimum_rates minimum_rates ;...
+    minimum_Rn maximum_Rn maximum_rates maximum_rates ...
     ];
 parameter_limits=parameter_limits_0;
 
@@ -490,7 +490,11 @@ report=round(min(max(model.instant_Rn),median(data))/10^precision)*10^precision;
 reportmin=round(min(max(model.instant_Rn),min(data))/10^precision)*10^precision;
 reportmax=round(min(max(model.instant_Rn),max(data))/10^precision)*10^precision;
 % disp(['    Background [Rn] level: ~' num2str(report) ' Bq/m3'])
-disp(['    Background [Rn] level: ' num2str(reportmin) '-' num2str(reportmax) ' Bq/m3'])
+if reportmax>reportmin
+    disp(['    Background [Rn] level: ' num2str(reportmin) '-' num2str(reportmax) ' Bq/m3'])
+else
+    disp(['    Background [Rn] level: ' '~' num2str(reportmax) ' Bq/m3'])
+end
 data=onesigma_params(:,2);
 % precision=max(0,min(floor(log10(median(data))),floor(log10(range(data))))-1);
 precision=2;
@@ -498,12 +502,17 @@ report=round(min(max(model.instant_Rn),median(data))/10^precision)*10^precision;
 reportmin=round(min(max(model.instant_Rn),min(data))/10^precision)*10^precision;
 reportmax=round(min(max(model.instant_Rn),max(data))/10^precision)*10^precision;
 % disp(['    Maximum    [Rn] level: ~' num2str(report) ' Bq/m3'])
-disp(['    Maximum    [Rn] level: ' num2str(reportmin) '-' num2str(reportmax) ' Bq/m3'])
+if reportmax>reportmin
+    disp(['    Maximum    [Rn] level: ' num2str(reportmin) '-' num2str(reportmax) ' Bq/m3'])
+else
+    disp(['    Maximum    [Rn] level: ' '~' num2str(reportmax) ' Bq/m3'])
+end
+
 ventilation_time=(onesigma_params(:,2)-onesigma_params(:,1))./onesigma_params(:,3);
 % disp(['    Effective ventilation time needed to flush Rn: ' num2str(floor(min(ventilation_time)/60/60)) ' to ' num2str(ceil(max(ventilation_time)/60/60)) ' hours'])
 % disp(['    Effective ventilation time needed to flush Rn: ~' num2str(round(max(1,median(ventilation_time)/60/60))) ' hours'])
 % disp(['    Effective ventilation time needed to flush Rn: ' num2str(floor(min(ventilation_time)/60/60)) '-' num2str(ceil(max(ventilation_time)/60/60)) ' hours'])
-disp(['    Effective ventilation time needed to flush Rn: ' num2str(max(0,floor((median(ventilation_time)-std(ventilation_time))/60/60))) '-' num2str(max(1,ceil((median(ventilation_time)-+std(ventilation_time))/60/60))) ' hours'])
+disp(['    Effective ventilation time needed to flush Rn: ' num2str(max(0,floor((min(ventilation_time))/60/10)*10)) '-' num2str(ceil(max(ventilation_time)/60/10)*10) ' minutes'])
 accumulation_time=(300-onesigma_params(:,1))./onesigma_params(:,4);
 if best_params(1)<300
     if best_params(2)<300
@@ -511,7 +520,7 @@ if best_params(1)<300
     else
         % disp(['    Maximum accumulation time with safe Rn levels: ' num2str(floor(min(accumulation_time)/60/60)) ' to ' num2str(ceil(max(accumulation_time)/60/60)) ' hours'])
 %         disp(['    Maximum accumulation time with safe Rn levels: ~' num2str(round(max(1,median(accumulation_time)/60/60))) ' hours'])
-                disp(['    Maximum accumulation time with safe Rn levels: ' num2str(max(0,floor((median(accumulation_time)-std(accumulation_time))/60/60))) '-' num2str(max(1,ceil((median(accumulation_time)+std(accumulation_time))/60/60))) ' hours'])
+                disp(['    Maximum accumulation time with safe Rn levels: ' num2str(max(0,floor((min(accumulation_time))/60/60))) '-' num2str(max(1,ceil(max(accumulation_time)/60/60))) ' hours'])
                 disp(' ')
                 if round(median(accumulation_time)/60/60)>0
                     disp(['Please, keep the room ventilated for at least ' num2str(ceil(median(ventilation_time)/60/10)*10) ' minutes every ' num2str(round(median(accumulation_time)/60/60)) ' hours.'])
@@ -597,3 +606,4 @@ ylim([0 max_y_plot*1.2])
 ylabel('Rn (Bq/m^3)')
 box on
 grid on
+
