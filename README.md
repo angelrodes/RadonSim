@@ -65,18 +65,20 @@ Example text output:
 
 ```
 Fitting results and [one sigma range]:
-    Reduced chi-squared: 19.9812
-    N models in 1-sigma: 137 of 3000
-    [Rn]min: 43.7 [35.7-50.4] Bq/m3
-    [Rn]max: 663 [569-794] Bq/m3
-    Ventilation  rate: 203 [108-1.64e+05] Bq/m3/h
-    Accumulation rate: 19.8 [15.7-23] Bq/m3/h
+    Reduced chi-squared: [2.4-3.4]
+    N models in 1-sigma: 595 of 5000
+    [Rn]min: 89.5 [71.2-95.7] Bq/m3
+    [Rn]max: 957 [796-1.2e+03] Bq/m3
+    Ventilation  rate: 8.42e+04 [312-2.14e+05] Bq/m3/h
+    Accumulation rate: 17.5 [14.3-20.9] Bq/m3/h
 ----------------------
 Useful information:
-    Background [Rn] level: 36-50 Bq/m3
-    Maximum    [Rn] level: 570-790 Bq/m3
-    Effective ventilation time needed to flush Rn: 0-1 hours
-    Maximum accumulation time with safe Rn levels: 11-15 hours
+    Background [Rn] level: ~100 Bq/m3
+    Maximum    [Rn] level: 800-1200 Bq/m3
+    Effective ventilation time needed to flush Rn: 0-3 hours
+    Maximum accumulation time with safe Rn levels: 10-15 hours
+ 
+Please, keep the room ventilated for at least 10 minutes every 12 hours.
 ```
 
 ## Potential issues
