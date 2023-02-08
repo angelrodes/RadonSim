@@ -50,11 +50,11 @@ The main purpose of the script is to fit a simple model to calculate the followi
 * Maximum Radon concentration (Bq/m3) room is not ventilated for a long time.
 * Minimum Radon concentration (Bq/m3) If the room is well-ventilated.
 * Ventilation rate (Bq/m3/h). The speed at which the Radon is eliminated when the air is circulating in the room.
-* Accumulation rate (Bq/m3/h). The speed at which the Radon is accumulated in the room when the windows are closed.
+* Accumulation rate (Bq/m3/h). The speed at which the Radon accumulates in the room when the windows are closed.
 
-This model is fitted in the data using a converging Mote-Carlo inverse-modeling method using a similar approach as in [Rodés *et al.* (2014)](https://doi.org/10.1016/j.quageo.2013.10.002).
+This model is fitted to the data using a converging Mote-Carlo inverse-modeling method using a similar approach as in [Rodés *et al.* (2014)](https://doi.org/10.1016/j.quageo.2013.10.002).
 
-The best fitting model is depicted in blue. 24h average corresponding to this model is depicted in magenta.
+The best fitting model is depicted in blue. Magenta line represents the 24h average corresponding to the same model.
 
 Best-fitting parameters and one-sigma ranges are displayed in the text output, together with some useful (and very simplified) information: 
 
