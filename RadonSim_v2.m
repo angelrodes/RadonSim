@@ -565,6 +565,12 @@ text(input.posix_time(sel),input.Rn(sel),'Data (24 h)',...
     'VerticalAlignment','Bottom','Color','k')
 
 % plot model 24h
+if testing==1
+    thismodel_24h_average=max(model.average_24h(onesigma,:));
+    plot(input.posix_time,thismodel_24h_average,':m','LineWidth',1)
+    thismodel_24h_average=min(model.average_24h(onesigma,:));
+    plot(input.posix_time,thismodel_24h_average,':m','LineWidth',1)
+end
 plot(input.posix_time,bestmodel_24h_average,'-m','LineWidth',2)
 % plot(input.posix_time,min(model.average_24h(onesigma,:)),'-m','LineWidth',1)
 % plot(input.posix_time,max(model.average_24h(onesigma,:)),'-m','LineWidth',1)
@@ -573,6 +579,12 @@ text(input.posix_time(sel),bestmodel_24h_average(sel),'Model (24 h)',...
     'VerticalAlignment','Bottom','Color','m')
 
 % plot model instant
+if testing==1
+    thismodel_concentrations=max(model.concentrations(onesigma,:));
+    plot(model.posix_time,thismodel_concentrations,'--b','LineWidth',1)
+    thismodel_concentrations=min(model.concentrations(onesigma,:));
+    plot(model.posix_time,thismodel_concentrations,'--b','LineWidth',1)
+end
 plot(model.posix_time,bestmodel_concentrations,'-b','LineWidth',2)
 % plot(model.posix_time,min(model.concentrations(onesigma,:)),'-b','LineWidth',1)
 % plot(model.posix_time,max(model.concentrations(onesigma,:)),'-b','LineWidth',1)
@@ -593,8 +605,6 @@ sel=model.ventilated==1;
 plot(model.posix_time(sel),model.ventilated(sel)*max_y_plot*1.1,'.b')
 text(min(model.posix_time(sel)),max_y_plot*1.1,' Air circulation',...
     'VerticalAlignment','Bottom','Color','b')
-
-
 
 xticks(model.posix_time_ticks)
 xticklabels([])
