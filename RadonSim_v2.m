@@ -294,14 +294,14 @@ end
 
 
 %% define parameters min_Rn max_Rn venitlation_rate accumulation_rate
-minimum_rates=range(model.instant_Rn)/range(model.posix_time)/10;
+minimum_rates=range(model.instant_averaged_24h)/range(model.posix_time)/10;
 maximum_rates=range(model.instant_Rn)/min(diff(model.posix_time))*10;
 minimum_Rn=min(model.instant_Rn(model.instant_Rn>0))*2;
 maximum_Rn=max(model.instant_Rn)*2;
 % min_Rn max_Rn venitlation_rate accumulation_rate
 % first line = minimum values ; second line = maximum value
 parameter_limits_0=[...
-    1          1          minimum_rates minimum_rates ;...
+    10          10          minimum_rates minimum_rates ;...
     minimum_Rn maximum_Rn maximum_rates maximum_rates ...
     ];
 parameter_limits=parameter_limits_0;
@@ -437,7 +437,7 @@ if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overl
     disp(['Average and SDOM [Rn] = ' num2str(mean(data),precis) ' ± ' num2str(std(data)/numel(unique(data)),1) ' Bq/m3'])
 end
 
-testing=1; % plot evolution, probabilites, etc.
+testing=0; % plot evolution, probabilites, etc.
 if testing==1
     % plot evolution (testing)
     figure; hold on; box on
@@ -570,6 +570,10 @@ if testing==1
     plot(input.posix_time,thismodel_24h_average,':m','LineWidth',1)
     thismodel_24h_average=min(model.average_24h(onesigma,:));
     plot(input.posix_time,thismodel_24h_average,':m','LineWidth',1)
+%     for modeli=find(onesigma)'
+%             thismodel_24h_average=model.average_24h(modeli,:);
+%             plot(input.posix_time,thismodel_24h_average,'-m','LineWidth',1)
+%     end
 end
 plot(input.posix_time,bestmodel_24h_average,'-m','LineWidth',2)
 % plot(input.posix_time,min(model.average_24h(onesigma,:)),'-m','LineWidth',1)
@@ -601,6 +605,8 @@ text(min(model.posix_time),300,'Maximum safe level',...
     'VerticalAlignment','Bottom','HorizontalAlignment','Left','Color','r')
 
 % plot ventilation
+sel=model.ventilated==0;
+plot(model.posix_time(sel),~model.ventilated(sel)*max_y_plot*1.1,'.','Color',[0.9 0.9 0.9])
 sel=model.ventilated==1;
 plot(model.posix_time(sel),model.ventilated(sel)*max_y_plot*1.1,'.b')
 text(min(model.posix_time(sel)),max_y_plot*1.1,' Air circulation',...
@@ -616,4 +622,3 @@ ylim([0 max_y_plot*1.2])
 ylabel('Rn (Bq/m^3)')
 box on
 grid on
-
