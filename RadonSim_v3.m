@@ -21,6 +21,7 @@ n_2s_models=n_models-n_random_models-n_convergence; % converge to 2 sigma
 n_models=n_random_models+n_convergence+n_2s_models;
 percentage_mutations=5; % percentage of parameter values that are always radomized
 % mutations reduce the chance of convergence to local minimums
+testing=0; % plot evolution, probabilites, etc.
 
 %% Select files (Radon data and air circulation)
 
@@ -455,10 +456,6 @@ if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overl
     disp(['Average and SDOM [Rn] = ' num2str(mean(data),precis) ' ± ' num2str(std(data)/numel(unique(data)),1) ' Bq/m3'])
 end
 
-testing=1; % plot evolution, probabilites, etc.
-if testing==1
-   
-end
 
 %% display results
 disp('----------------------')
