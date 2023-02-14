@@ -23,13 +23,16 @@ A script written in Matlab/Octave, utilizing data obtained from the Airthings Wa
 
 ### Fit the model and plot your data
 
-1. Run the file ```RadonSim_v2.m``` in Matlab/Octave. 
+1. Run the file ```RadonSim_v3.m``` in Matlab/Octave. 
 
+<!---
 > If you are using Linux and you have Octave installed, you can just run this in your terminal:
 
 ```bash
-wget -O - https://raw.githubusercontent.com/angelrodes/RadonSim/main/RadonSim_v2.m | octave
+wget -O - https://raw.githubusercontent.com/angelrodes/RadonSim/main/RadonSim_v3.m | octave
 ```
+--->
+
 The script will ask for the CSV files. Two files are given as examples:
 
 * Radon data file: ```2930129618-latest(20221121).csv```
