@@ -14,14 +14,14 @@ disp('    https://dashboard.airthings.com/devices/')
 
 
 %% define number of models to run
-n_models=5000;
-n_random_models=round(n_models/exp(1)); % purely random
-n_convergence=round(n_models/exp(1)/2); % converge to the top (best) 10% of the models
-n_2s_models=n_models-n_random_models-n_convergence; % converge to 2 sigma
+n_models=3000; % at least 1000
+n_random_models=round(n_models/4); % purely random
+n_convergence=round(n_models/4); % expand 50% and converge to the top (best) 10% of the models
+n_2s_models=n_models-n_random_models-n_convergence; % converge to ~2 sigma (see method below)
 n_models=n_random_models+n_convergence+n_2s_models;
 percentage_mutations=5; % percentage of parameter values that are always radomized
 % mutations reduce the chance of convergence to local minimums
-testing=0; % plot evolution, probabilites, etc.
+testing=1; % plot evolution, probabilites, etc.
 
 %% Select files (Radon data and air circulation)
 
@@ -309,12 +309,17 @@ end
 
 
 %% define parameters min_Rn max_Rn venitlation_rate accumulation_rate
-range=@(x)max(x(:))-min(x(:));
+range=@(x)max(x(:))-min(x(:)); % just in case RANGE is not included in your version
 minimum_rates=range(model.instant_averaged_24h)/range(model.posix_time)/10;
-maximum_rates=range(model.instant_Rn)/min(diff(model.posix_time))*10;
-minimum_Rn=min(model.instant_Rn(model.instant_Rn>0))*2;
-maximum_Rn=max(model.instant_Rn)*2;
+maximum_rates=range(model.average_3h)/min(diff(model.posix_time));
+minimum_Rn=min(model.average_3h(model.average_3h>0))*2;
+maximum_Rn=max(model.average_3h);
+% Initial parameters' limits: for the purely random, and mutant models. 
+% After the purely random models, the parameters are allowed to expand 50%
+% every interation, so the program can search results out of these limits.
+% Structure of the limits:
 % min_Rn max_Rn venitlation_rate accumulation_rate
+% Br/m3 Bq/m3 Bq/m3/s Bq/m3/s
 % first line = minimum values ; second line = maximum value
 parameter_limits_0=[...
     10          10          minimum_rates minimum_rates ;...
@@ -330,96 +335,105 @@ model.red_chi_square=NaN.*zeros(n_models,1);
 model.average_24h=NaN.*zeros(n_models,numel(input.Rn));
 
 %% run models
-h = waitbar(0,'Running models...','Name',['Running ' num2str(n_models) ' models']);
-for n=1:n_models
-    if n>1 && mod(n,10)==0
-        waitbar(n/n_models,h,['n=' num2str(n) ' ; \chi^2_\nu=' num2str(min(model.red_chi_square),3)])
-    end
-    % recalculate parameters (convergence)
-    %     disp('recalculate parameters (convergence)')
-    %     tic
-    if n>n_random_models
-        if n<n_random_models+n_convergence
-            sorted_red_chi_square=sort(model.red_chi_square);
-            select=model.red_chi_square<=sorted_red_chi_square(ceil(n/10));
-            expand_limits=2;
-            parameter_limits=[...
-                min(model.parameters(select,:))./expand_limits ; ...
-                max(model.parameters(select,:)).*expand_limits ...
-                ];
-        else
-            desired_min_n_fitting_models=max(round(n/100),16);
-            if sum(model.red_chi_square<min(model.red_chi_square)+2)>desired_min_n_fitting_models
-                parameter_limits=[...
-                    min(model.parameters(model.red_chi_square<min(model.red_chi_square)+2,:)) ; ...
-                    max(model.parameters(model.red_chi_square<min(model.red_chi_square)+2,:)) ...
-                    ];
-            else
+min_n_iterations=2; % minimum number of iterations (2 should be enough)
+max_n_iterations=10; % maximum number of iterations (2 should be enough)
+iteration=0;
+enough_iterations=0;
+while enough_iterations==0
+    iteration=iteration+1;
+    h = waitbar(0,'Running models...','Name',['Iteration ' num2str(iteration) ': ' num2str(n_models) ' models']);
+    for n=1:n_models
+        if n>1 && mod(n,10)==0
+            waitbar(n/n_models,h,['n=' num2str(n) ' ; \chi^2_\nu=' num2str(min(model.red_chi_square),3)])
+        end
+        % recalculate parameters (convergence/expand)
+        if n>n_random_models
+            if n<n_random_models+n_convergence % converge and expand
                 sorted_red_chi_square=sort(model.red_chi_square);
-                select=model.red_chi_square<=sorted_red_chi_square(desired_min_n_fitting_models);
+                select=model.red_chi_square<=sorted_red_chi_square(ceil(n/10)); % best 10%
+                expand_limits=2; % expand
                 parameter_limits=[...
-                    min(model.parameters(select,:)) ; ...
-                    max(model.parameters(select,:)) ...
+                    min(model.parameters(select,:))./expand_limits ; ...
+                    max(model.parameters(select,:)).*expand_limits ...
                     ];
+            else % converge to "2σ"
+                percentage_n_2s_models_done=(n-(n_random_models+n_convergence)+1)/n_2s_models;
+                n_sigma=3*exp(-percentage_n_2s_models_done); % change this number from 3 to 1 during the fit (average~2)
+                desired_min_n_fitting_models=max(round(n/100),16); % try to get at least 1% of the models in nσ
+                if sum(model.red_chi_square<min(model.red_chi_square)+2)>desired_min_n_fitting_models % if enough models fit in nσ
+                    select=model.red_chi_square<min(model.red_chi_square)+n_sigma;
+                    parameter_limits=[...
+                        min(model.parameters(select,:)) ; ...
+                        max(model.parameters(select,:)) ...
+                        ];
+                else % if not enough models fit in nσ
+                    sorted_red_chi_square=sort(model.red_chi_square);
+                    select=model.red_chi_square<=sorted_red_chi_square(desired_min_n_fitting_models);
+                    parameter_limits=[...
+                        min(model.parameters(select,:)) ; ...
+                        max(model.parameters(select,:)) ...
+                        ];
+                end
+            end
+            model.parameters(n,:)=parameter_limits(1,:) .* ...
+                ( parameter_limits(2,:)./parameter_limits(1,:) ).^rand(1,4);
+            if n<n_models % do not allow mutations in the last model
+                % purely random (mutant) models help escaping from local minima
+                mutant_parameters=parameter_limits_0(1,:) .* ...
+                    ( parameter_limits_0(2,:)./parameter_limits_0(1,:) ).^rand(1,4); % mutant parameter values do not converge
+                mutations=rand(1,4)<percentage_mutations/100;
+                model.parameters(n,:)=model.parameters(n,:).*~mutations+mutant_parameters.*mutations;
             end
         end
-        model.parameters(n,:)=parameter_limits(1,:) .* ...
-            ( parameter_limits(2,:)./parameter_limits(1,:) ).^rand(1,4);
-        if n<n_models % do not allow mutations in the last model
-            mutant_parameters=parameter_limits_0(1,:) .* ...
-                ( parameter_limits_0(2,:)./parameter_limits_0(1,:) ).^rand(1,4); % mutant parameter values do not converge
-            mutations=rand(1,4)<percentage_mutations/100;
-            model.parameters(n,:)=model.parameters(n,:).*~mutations+mutant_parameters.*mutations;
+
+        model.parameters(n,2)=min(model.parameters(n,2),max(model.instant_Rn)); % do not go over the maximum concentration measured
+        model.parameters(n,1)=min(model.parameters(n,1),model.parameters(n,2)); % force min<=max
+        params=model.parameters(n,:); % min_Rn max_Rn venitlation_rate accumulation_rate
+
+        % calculate model concentrations
+        for m=1:numel(model.ventilated)
+            if m==1
+                % concentration=params(1)*(model.ventilated(1)==1)+params(2)*(model.ventilated(1)==0);
+                concentration=model.average_3h(1); % start with the first 3-h average
+            elseif model.ventilated(m)==0
+                concentration=concentration+params(4)*(model.posix_time(m)-model.posix_time(m-1));
+            else
+                concentration=concentration-params(3)*(model.posix_time(m)-model.posix_time(m-1));
+            end
+            concentration=max(concentration,params(1));
+            concentration=min(concentration,params(2));
+            model.concentrations(n,m)=concentration;
+        end
+
+        % calculate 24 h average
+        Ci=model.concentrations(n,:);
+        C24h=NaN.*Ci;
+        for m=24*60*60/median(diff(model.posix_time)):round(30*60/median(diff(model.posix_time))):numel(model.posix_time)
+            data=Ci(model.posix_time<=model.posix_time(m) &...
+                model.posix_time>model.posix_time(m)-24*60*60);
+            C24h(m)=mean(data);
+        end
+        %     interpolate 24 h average
+        sel=~isnan(C24h);
+        model.average_24h(n,:)=interp1(model.posix_time(sel),C24h(sel),input.posix_time);
+
+        % calculate reduced chi square (goodness of fit of the model)
+        select=~isnan(model.average_24h(n,:)'-input.Rn);
+        dof=sum(select)-4;
+        % Reduced chi-square
+        model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./(input.dRn(select)).^2)/dof;
+    end
+    close(h)
+    % decide if doing another iteration
+    if iteration>=max_n_iterations
+        enough_iterations=1;
+    end
+    if iteration>=min_n_iterations
+        if sum(model.red_chi_square<min(model.red_chi_square)+1)>min(100,max(round(n_models/100),30)) % target between 30 and 100 fitting models
+            enough_iterations=1;
         end
     end
-    model.parameters(n,1)=min(model.parameters(n,1), model.parameters(n,2)); % force min<=max
-    params=model.parameters(n,:); % min_Rn max_Rn venitlation_rate accumulation_rate
-    %     toc
-
-    % calculate model
-    %     disp('calculate model')
-    %     tic
-    for m=1:numel(model.ventilated)
-        if m==1
-            % concentration=params(1)*(model.ventilated(1)==1)+params(2)*(model.ventilated(1)==0);
-            concentration=model.average_3h(1);
-        elseif model.ventilated(m)==0
-            concentration=concentration+params(4)*(model.posix_time(m)-model.posix_time(m-1));
-        else
-            concentration=concentration-params(3)*(model.posix_time(m)-model.posix_time(m-1));
-        end
-        concentration=max(concentration,params(1));
-        concentration=min(concentration,params(2));
-        model.concentrations(n,m)=concentration;
-    end
-    %     toc
-
-    % calculate 24 h average
-    %     disp('calculate 24 h average')
-    %     tic
-    Ci=model.concentrations(n,:);
-    C24h=NaN.*Ci;
-    for m=24*60*60/median(diff(model.posix_time)):round(30*60/median(diff(model.posix_time))):numel(model.posix_time)
-        data=Ci(model.posix_time<=model.posix_time(m) &...
-            model.posix_time>model.posix_time(m)-24*60*60);
-        C24h(m)=mean(data);
-    end
-    %     toc
-    %     disp('interpolate 24 h average')
-    %     tic
-    sel=~isnan(C24h);
-    model.average_24h(n,:)=interp1(model.posix_time(sel),C24h(sel),input.posix_time);
-    %     toc
-
-    % calculate reduced chi square (GOODNES OF EACH FIT)
-    select=~isnan(model.average_24h(n,:)'-input.Rn);
-    dof=sum(select)-4;
-    
-    % Reduced chi-square
-    model.red_chi_square(n,1)=sum((model.average_24h(n,select)'-input.Rn(select)).^2./(input.dRn(select)).^2)/dof;
 end
-lastmodel=model.average_24h(n,:)'.*select-0.1; % just for testing
-close(h)
 
 %% select best result
 % calculate best and one-sigma range
@@ -431,10 +445,12 @@ bestmodel_24h_average=model.average_24h(select,:);
 
 onesigma=(model.red_chi_square<min(model.red_chi_square)+1);
 minimum_models_in_one_sigma=min(30,round(n_models/100));
+enogh_one_sigma_models=1;
 if sum(onesigma)<minimum_models_in_one_sigma % if there are not many models in one-sigma, just take more
     sortedchi=sort(model.red_chi_square);
     maxchi=sortedchi(minimum_models_in_one_sigma+1);
     onesigma= (model.red_chi_square<maxchi);
+    enogh_one_sigma_models=0;
 else
     maxchi=min(model.red_chi_square)+1;
 end
@@ -445,6 +461,25 @@ chisqpdf=@(x,dof)1./(2.^(dof/2)*gamma(dof/2)).*x.^(dof/2).*exp(-x/2);
 model.probabilities=chisqpdf(model.red_chi_square,1); % this is > 0 even with very low GOF
 model.one_sigma_prob=chisqpdf(maxchi,1);
 
+
+
+
+%% display results
+disp('----------------------')
+disp(['Place: ' Air_circulation_file_name])
+disp('Best-fit results, (median), and [one sigma range]:')
+disp(['    Reduced chi-squared: '  num2str(round(min(model.red_chi_square)*10)/10) ...
+    ' (' num2str(round(median(model.red_chi_square(onesigma))*10)/10) ')'...
+    ' [' num2str(round(min(model.red_chi_square)*10)/10) '-' num2str(round(maxchi*10)/10) ']'])
+% check if we have enough models
+if sum(onesigma)>=min(30,n_models/100)
+    disp(['    N models in 1-sigma: ' num2str(sum(onesigma)) ' of ' num2str(n_models)])
+else
+    warning(['N models in 1-sigma: only ' num2str(sum(onesigma)) ' of ' num2str(n_models)])
+end
+if ~enogh_one_sigma_models
+    warning(['Not eonugh models below min(reduced-chi-squared)+1. Please run more models for better uncertainties.'])
+end
 % check if model fits the data
 if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overlap or inverted
     disp('----------------------')
@@ -455,18 +490,15 @@ if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overl
     precis=ceil(log10(mean(data)))-floor(log10(std(data)/numel(unique(data))));
     disp(['Average and SDOM [Rn] = ' num2str(mean(data),precis) ' ± ' num2str(std(data)/numel(unique(data)),1) ' Bq/m3'])
 end
-
-
-%% display results
-disp('----------------------')
-disp('Best-fit results, (median), and [one sigma range]:')
-disp(['    Reduced chi-squared: '  num2str(round(min(model.red_chi_square)*10)/10) ...
-    ' (' num2str(round(median(model.red_chi_square(onesigma))*10)/10) ')'...
-    ' [' num2str(round(min(model.red_chi_square)*10)/10) '-' num2str(round(maxchi*10)/10) ']'])
-if sum(onesigma)>=min(30,n_models/100)
-    disp(['    N models in 1-sigma: ' num2str(sum(onesigma)) ' of ' num2str(n_models)])
-else
-    warning(['N models in 1-sigma: only ' num2str(sum(onesigma)) ' of ' num2str(n_models)])
+% check if model fits the data
+if max(onesigma_params(:,1))>min(onesigma_params(:,2)) % if max and min Rn overlap or inverted
+    disp('----------------------')
+    warning('Apparently, model does not fit the data!')
+    disp('Air circulation does not reduce Rn levels significantly.')
+    sel=~isnan(model.average_3h);
+    data=model.average_3h(sel);
+    precis=ceil(log10(mean(data)))-floor(log10(std(data)/numel(unique(data))));
+    disp(['Average and SDOM [Rn] = ' num2str(mean(data),precis) ' ± ' num2str(std(data)/numel(unique(data)),1) ' Bq/m3'])
 end
 disp(['    [Rn]min: ' num2str(best_params(1),3)  ...
     ' (' num2str(median(onesigma_params(:,1)),3) ')'...
@@ -528,7 +560,7 @@ else
     if ventilation_minutes/60>0.9*hours_between_ventilations
         disp('    Please, keep the room ventilated as much as possible!')
     else
-        disp(['    Then, to mantain safe radon levels: ventilate the room for ~' ...
+        disp(['    Then, to keep safe radon levels: ventilate the room for ~' ...
             num2str(ceil(ventilation_minutes/5)*5) ...
             ' minutes every ~' ...
             num2str(hours_between_ventilations) ...
@@ -628,7 +660,7 @@ grid on
 
 if testing==1
     %% plot parameter evolution and distribution
-    figure
+    figure('units','normalized','outerposition',[0 1 0.5 0.5],'Name','Parameters')
     subplot(1,2,1); hold on; box on
     plot(1:numel(model.red_chi_square),model.red_chi_square,'.b')
     plot(1:numel(model.red_chi_square),model.parameters(:,1),'.','Color',[0.8 0.8 0.8])
@@ -645,12 +677,12 @@ if testing==1
     plot(model.parameters(:,2),model.probabilities,'.','Color',[0.5 0.5 0.3])
     plot(model.parameters(:,3)*60*60,model.probabilities,'.r')
     plot(model.parameters(:,4)*60*60,model.probabilities,'.g')
-    set(gca, 'XScale', 'log'); ylim([0 max(model.probabilities)*1.2])
+    set(gca, 'XScale', 'log'); ylim([0 model.one_sigma_prob*3])
     ylabel('P(\chi^2_\nu)'); legend('\chi^2_\nu+1','minRn (Bq/m3)','maxRn (Bq/m3)','vent. (Bq/m3/h)','accum (Bq/m3/h)')
     grid on
 
     %% plot instant model histograms (testing)
-    figure;
+    figure('units','normalized','outerposition',[1 0 0.5 0.5],'Name','Concentrations')
     subplot(2,1,1)
     data=model.instant_Rn;
     hold on; box on
@@ -698,7 +730,7 @@ if testing==1
     sel=find(model.average_3h==max(model.average_3h),1,'first');
     text(model.posix_time(sel),model.average_3h(sel),...
         ' Media 3-h (calculado)',...
-        'VerticalAlignment','Bottom','Color','k')
+        'VerticalAlignment','top','Color','k')
 
     % plot input data
     sel=~isnan(input.Rn) & input.posix_time>min(ventilation.posix_time)+24*60*60;
@@ -713,7 +745,7 @@ if testing==1
     plot(input.posix_time,input.posix_time.*0+300,'--r','LineWidth',1)
     % text(mean(model.posix_time),300,'Maximum safe level',...
     %     'VerticalAlignment','Bottom','HorizontalAlignment','Center','Color','r')
-    text(min(model.posix_time),300,'Límite seguridad',...
+    text(min(model.posix_time),300,' Límite de seguridad',...
         'VerticalAlignment','Bottom','HorizontalAlignment','Left','Color','r')
 
     % plot ventilation
